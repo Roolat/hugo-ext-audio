@@ -1,0 +1,34 @@
+[tool.poetry]
+name = "hugo-ext-audio"
+version = "1.0.0"
+description = "Audio- (music-) related functionality middleware for Hugo"
+authors = ["Nariman Safiulin <woofilee@gmail.com>"]
+license = "MIT"
+
+readme = "README.md"
+repository = "https://github.com/Roolat/hugo-ext-audio"
+
+keywords = ["discord", "bot", "hugo", "audio", "music"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Natural Language :: Russian",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+packages = [
+    { include = "hugo" },
+]
+
+[tool.poetry.dependencies]
+python = "^3.6"
+"discord.py" = { git = "https://github.com/Rapptz/discord.py.git", branch = "rewrite" }
+hugo = "^0.5.0"
+pendulum = "^2.0"
+
+[tool.black]
+line-length = 80
+py36 = true
