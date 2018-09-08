@@ -25,7 +25,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.6"
-"discord.py" = { git = "https://github.com/Rapptz/discord.py.git", branch = "rewrite" }
+"discord.py" = { git = "https://github.com/Rapptz/discord.py.git", branch = "rewrite", extras = ["voice"] }
 hugo = "^0.5.0"
 pendulum = "^2.0"
 
