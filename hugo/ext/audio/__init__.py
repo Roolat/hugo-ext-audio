@@ -27,22 +27,36 @@ import discord
 
 from hugo.core.constants import EventType
 from hugo.core.context import Context
-from hugo.core.handler import channel_type, event, not_authored_by_bot, pattern
+from hugo.core.handler import (
+    ChannelType,
+    EventConstraint,
+    BotConstraint,
+    Pattern,
+)
 from hugo.core.middleware import (
     MiddlewareState,
     OneOfAll,
     collection_of,
     chain_of,
+    middleware as m,
 )
 
 
 __version__ = "1.0.0"
 
 
-@event(EventType.MESSAGE)
-@not_authored_by_bot()
-@channel_type(guild=True)
-@pattern(re.compile(r"join", re.I))
+@m(EventConstraint(EventType.MESSAGE))
+@m(BotConstraint(authored_by_bot=False))
+@m(ChannelType(guild=True))
+@m(
+    collection_of(
+        OneOfAll,
+        [
+            Pattern(re.compile(r"\bjoin\b", re.I)),
+            Pattern(re.compile(r"\bconnect\b", re.I)),
+        ],
+    )
+)
 async def join(*args, ctx: Context, next, **kwargs):
     """Join to the user's voice channel."""
     message = ctx.kwargs["message"]
@@ -66,26 +80,100 @@ async def join(*args, ctx: Context, next, **kwargs):
             return
         await voice_client.move_to(voice_channel)
     #
-    await message.channel.send("Connected!")
+    await message.channel.send("Connected.")
 
 
-@event(EventType.MESSAGE)
-@not_authored_by_bot()
-@channel_type(guild=True)
-@pattern(re.compile(r"leave", re.I))
+@m(EventConstraint(EventType.MESSAGE))
+@m(BotConstraint(authored_by_bot=False))
+@m(ChannelType(guild=True))
+@m(
+    collection_of(
+        OneOfAll,
+        [
+            Pattern(re.compile(r"\bleave\b", re.I)),
+            Pattern(re.compile(r"\bdisconnect\b", re.I)),
+        ],
+    )
+)
 async def leave(*args, ctx: Context, next, **kwargs):
     """Leave currently connected voice channel."""
     message = ctx.kwargs["message"]
     voice_client = message.guild.voice_client
 
     if voice_client is None:
-        await message.channel.send("I'm not connected to any of!")
+        await message.channel.send("I'm not connected to voice channel.")
         return
     #
     await voice_client.disconnect(force=True)
-    await message.channel.send("Disconnected!")
+    await message.channel.send("Disconnected.")
+
+
+@m(EventConstraint(EventType.MESSAGE))
+@m(BotConstraint(authored_by_bot=False))
+@m(ChannelType(guild=True))
+@m(Pattern(re.compile(r"\bpause\b", re.I)))
+async def pause(*args, ctx: Context, next, **kwargs):
+    """Pause currently playing audio."""
+    message = ctx.kwargs["message"]
+    voice_client = message.guild.voice_client
+
+    if voice_client is None:
+        await message.channel.send("I'm not connected to voice channel.")
+        return
+    if not voice_client.is_playing():
+        await message.channel.send("I'm not playing audio.")
+        return
+    if voice_client.is_paused():
+        await message.channel.send("Already paused.")
+        return
+    #
+    await voice_client.pause()
+    await message.channel.send("Paused.")
+
+
+@m(EventConstraint(EventType.MESSAGE))
+@m(BotConstraint(authored_by_bot=False))
+@m(ChannelType(guild=True))
+@m(Pattern(re.compile(r"\bresume\b", re.I)))
+async def resume(*args, ctx: Context, next, **kwargs):
+    """Resume currently playing audio."""
+    message = ctx.kwargs["message"]
+    voice_client = message.guild.voice_client
+
+    if voice_client is None:
+        await message.channel.send("I'm not connected to voice channel.")
+        return
+    if not voice_client.is_playing():
+        await message.channel.send("I'm not playing audio.")
+        return
+    if not voice_client.is_paused():
+        await message.channel.send("Already playing.")
+        return
+    #
+    await voice_client.resume()
+    await message.channel.send("Resumed.")
+
+
+@m(EventConstraint(EventType.MESSAGE))
+@m(BotConstraint(authored_by_bot=False))
+@m(ChannelType(guild=True))
+@m(Pattern(re.compile(r"\bstop\b", re.I)))
+async def stop(*args, ctx: Context, next, **kwargs):
+    """Stop currently playing audio."""
+    message = ctx.kwargs["message"]
+    voice_client = message.guild.voice_client
+
+    if voice_client is None:
+        await message.channel.send("I'm not connected to voice channel.")
+        return
+    if not voice_client.is_playing():
+        await message.channel.send("I'm not playing audio.")
+        return
+    #
+    await voice_client.stop()
+    await message.channel.send("Stopped.")
 
 
 def get_root_middleware():
     """Return root middleware chain."""
-    return collection_of(OneOfAll, [join, leave])
+    return collection_of(OneOfAll, [join, leave, pause, resume, stop])
