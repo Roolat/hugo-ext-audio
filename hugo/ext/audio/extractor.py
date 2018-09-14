@@ -21,15 +21,44 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
+import abc
+import asyncio
+import functools
+
+import streamlink
+
 from hugo.ext.audio.entry import Entry
 from hugo.ext.audio.exceptions import (
     AudioExtensionError,
     UnsupportedURLError,
     EmptyStreamError,
 )
-from hugo.ext.audio.extractor import Extractor, StreamlinkExtractor
-from hugo.ext.audio.middleware import Join, Leave, Play, Pause, Resume, Stop
-from hugo.ext.audio.state import State
 
 
-__version__ = "2.1.0"
+class Extractor(abc.ABC):
+    async def extract(
+        self, original_url: str, loop: asyncio.AbstractEventLoop
+    ) -> Entry:
+        pass  # pragma: no cover
+
+
+class StreamlinkExtractor(Extractor):
+    def __init__(self):
+        self.session = streamlink.Streamlink()
+
+    async def extract(self, url: str, loop: asyncio.AbstractEventLoop) -> Entry:
+        try:
+            streams = await loop.run_in_executor(
+                None, functools.partial(self.session.streams, url)
+            )
+        except streamlink.NoPluginError:
+            raise UnsupportedURLError()
+        except streamlink.PluginError:
+            raise AudioExtensionError()
+        #
+        if not streams:
+            raise EmptyStreamError()
+        if "best" not in streams:
+            raise EmptyStreamError()
+        #
+        return Entry(original_url=url, stream_url=streams["best"].url)

@@ -21,15 +21,15 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from hugo.ext.audio.entry import Entry
-from hugo.ext.audio.exceptions import (
-    AudioExtensionError,
-    UnsupportedURLError,
-    EmptyStreamError,
-)
 from hugo.ext.audio.extractor import Extractor, StreamlinkExtractor
-from hugo.ext.audio.middleware import Join, Leave, Play, Pause, Resume, Stop
-from hugo.ext.audio.state import State
 
 
-__version__ = "2.1.0"
+class State:
+    def __init__(self):
+        self.guild_states = {}
+        self.extractors = {}
+
+        self.initialize_extractors()
+
+    def initialize_extractors(self):
+        self.extractors["streamlink"] = StreamlinkExtractor()

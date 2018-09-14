@@ -21,15 +21,18 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from hugo.ext.audio.entry import Entry
-from hugo.ext.audio.exceptions import (
-    AudioExtensionError,
-    UnsupportedURLError,
-    EmptyStreamError,
-)
-from hugo.ext.audio.extractor import Extractor, StreamlinkExtractor
-from hugo.ext.audio.middleware import Join, Leave, Play, Pause, Resume, Stop
-from hugo.ext.audio.state import State
+from hugo.core.exceptions import ExtensionError
 
 
-__version__ = "2.1.0"
+class AudioExtensionError(ExtensionError):
+    """Base exception class for the audio extension errors."""
+
+    pass
+
+
+class UnsupportedURLError(AudioExtensionError):
+    pass
+
+
+class EmptyStreamError(AudioExtensionError):
+    pass
