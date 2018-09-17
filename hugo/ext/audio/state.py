@@ -21,7 +21,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from hugo.ext.audio.extractor import Extractor, StreamlinkExtractor
+from hugo.ext.audio.extractor import Extractor, YouTubeDLExtractor, StreamlinkExtractor
 
 
 class State:
@@ -32,4 +32,19 @@ class State:
         self.initialize_extractors()
 
     def initialize_extractors(self):
+        self.extractors["youtube-dl"] = YouTubeDLExtractor()
         self.extractors["streamlink"] = StreamlinkExtractor()
+
+
+class GuildState:
+    def __init__(self):
+        self._volume = 1.0
+        self.playlist = []
+
+    @property
+    def volume(self):
+        return self._volume
+
+    @volume.setter
+    def volume(self, value):
+        self._volume = max(max(value, 2.0), 0.0)

@@ -24,8 +24,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import abc
 import asyncio
 import functools
+from typing import Sequence
 
 import streamlink
+import youtube_dl
 
 from hugo.ext.audio.entry import Entry
 from hugo.ext.audio.exceptions import (
@@ -37,9 +39,42 @@ from hugo.ext.audio.exceptions import (
 
 class Extractor(abc.ABC):
     async def extract(
-        self, original_url: str, loop: asyncio.AbstractEventLoop
-    ) -> Entry:
+        self, source_url: str, loop: asyncio.AbstractEventLoop
+    ) -> Sequence[Entry]:
         pass  # pragma: no cover
+
+
+class YouTubeDLExtractor(Extractor):
+
+    OPTIONS = {
+        "format": "bestaudio/best",
+        "default_search": "auto",
+        "noplaylist": True,
+        "quiet": True,
+    }
+
+    def __init__(self):
+        self.session = youtube_dl.YoutubeDL(params=self.OPTIONS)
+
+    async def extract(self, url: str, loop: asyncio.AbstractEventLoop) -> Entry:
+        try:
+            info = await loop.run_in_executor(
+                None,
+                functools.partial(
+                    self.session.extract_info, url, download=False
+                ),
+            )
+            type = info.get("_type", "video")
+        except Exception:
+            raise AudioExtensionError()
+        if type == "video":
+            return [Entry(url, info["url"])]
+        elif type == "playlist":
+            return [
+                Entry(url, info_entry["url"]) for info_entry in info["entries"]
+            ]
+        else:
+            raise UnsupportedURLError()
 
 
 class StreamlinkExtractor(Extractor):
@@ -61,4 +96,4 @@ class StreamlinkExtractor(Extractor):
         if "best" not in streams:
             raise EmptyStreamError()
         #
-        return Entry(original_url=url, stream_url=streams["best"].url)
+        return [Entry(url, streams["best"].url)]

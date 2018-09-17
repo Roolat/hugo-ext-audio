@@ -23,6 +23,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 class Entry:
-    def __init__(self, original_url, stream_url):
-        self.original_url = original_url
+    def __init__(self, source_url, stream_url):
+        self.source_url = source_url
         self.stream_url = stream_url

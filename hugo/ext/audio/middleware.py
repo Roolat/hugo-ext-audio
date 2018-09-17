@@ -92,8 +92,27 @@ class Play(Middleware):
     """Middleware for playing provided audio's url in a user's voice channel."""
 
     async def run(
-        self, *_, ctx: Context, next: Callable, url: Optional[str] = None, **kw
+        self,
+        *_,
+        ctx: Context,
+        next: Callable,
+        url: Optional[str] = None,
+        extractor: Optional[str] = None,
+        **kw,
     ):  # noqa: D102
+        if extractor in ("streamlink", "sl", "livestreamer", "ls"):
+            extractor = "streamlink"
+        elif extractor in (
+            "youtube-dl",
+            "youtubedl",
+            "ytdl",
+            "ydl",
+            "utdl",
+            "udl",
+        ):
+            extractor = "youtube-dl"
+        else:
+            extractor = "youtube-dl"
         state: State = MiddlewareState.get_state(ctx, State)
         message = ctx.kwargs["message"]
         guild = message.guild
@@ -103,10 +122,10 @@ class Play(Middleware):
             return
         elif url:
             try:
-                entry = await state.extractors["streamlink"].extract(
+                playlist = await state.extractors[extractor].extract(
                     url, ctx.client.loop
                 )
-                state.guild_states[guild.id] = entry
+                state.guild_states[guild.id] = playlist
             except UnsupportedURLError:
                 await message.channel.send("Provided URL is not supported.")
                 return
@@ -130,7 +149,7 @@ class Play(Middleware):
             voice_client.stop()
         #
         audio_source = discord.FFmpegPCMAudio(
-            state.guild_states[guild.id].stream_url
+            state.guild_states[guild.id][0].stream_url
         )
         audio_source = discord.PCMVolumeTransformer(audio_source)
 
