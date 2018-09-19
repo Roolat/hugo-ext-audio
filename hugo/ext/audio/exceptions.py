@@ -36,3 +36,7 @@ class UnsupportedURLError(AudioExtensionError):
 
 class EmptyStreamError(AudioExtensionError):
     pass
+
+
+class PlayerError(AudioExtensionError):
+    pass

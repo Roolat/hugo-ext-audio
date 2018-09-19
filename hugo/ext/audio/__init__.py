@@ -26,9 +26,24 @@ from hugo.ext.audio.exceptions import (
     AudioExtensionError,
     UnsupportedURLError,
     EmptyStreamError,
+    PlayerError,
 )
-from hugo.ext.audio.extractor import Extractor, StreamlinkExtractor
-from hugo.ext.audio.middleware import Join, Leave, Play, Pause, Resume, Stop
+from hugo.ext.audio.extractor import (
+    Extractor,
+    StreamlinkExtractor,
+    YouTubeDLExtractor,
+)
+from hugo.ext.audio.middleware import (
+    Join,
+    Leave,
+    Play,
+    Pause,
+    Resume,
+    Skip,
+    Stop,
+    Volume,
+)
+from hugo.ext.audio.player import Player, PlayerStatus
 from hugo.ext.audio.state import State
 
 

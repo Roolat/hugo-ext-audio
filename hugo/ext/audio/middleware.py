@@ -29,7 +29,6 @@ import discord
 from hugo.core.context import Context
 from hugo.core.middleware import Middleware, MiddlewareState
 
-from hugo.ext.audio.entry import Entry
 from hugo.ext.audio.exceptions import (
     AudioExtensionError,
     UnsupportedURLError,
@@ -42,7 +41,9 @@ class Join(Middleware):
     """Middleware for joining to the user's voice channel."""
 
     async def run(self, *_, ctx: Context, next: Callable, **kw):  # noqa: D102
+        state = MiddlewareState.get_state(ctx, State)
         message = ctx.kwargs["message"]
+        player = state.players[message.guild.id]
         author = message.author
 
         if not isinstance(author, discord.Member):
@@ -53,11 +54,10 @@ class Join(Middleware):
             return
         #
         voice_channel = author.voice.channel
-        voice_client = message.guild.voice_client
 
-        if voice_client is None:
+        if player.voice_client is None:
             try:
-                voice_client = await voice_channel.connect()
+                player.voice_client = await voice_channel.connect()
             except asyncio.TimeoutError:
                 await message.channel.send(
                     "Unfortunately, something wrong happened and I hasn't "
@@ -65,10 +65,10 @@ class Join(Middleware):
                 )
                 return
         else:
-            if voice_client.channel == voice_channel:
+            if player.voice_client.channel == voice_channel:
                 await message.channel.send("I'm already in your voice channel.")
                 return
-            await voice_client.move_to(voice_channel)
+            await player.voice_client.move_to(voice_channel)
         #
         await message.channel.send("Connected.")
 
@@ -77,14 +77,17 @@ class Leave(Middleware):
     """Middleware for leaving currently connected voice channel."""
 
     async def run(self, *_, ctx: Context, next: Callable, **kw):  # noqa: D102
+        state = MiddlewareState.get_state(ctx, State)
         message = ctx.kwargs["message"]
-        voice_client = message.guild.voice_client
+        player = state.players[message.guild.id]
 
-        if voice_client is None:
+        if player.voice_client is None:
             await message.channel.send("I'm not connected to voice channel.")
             return
         #
-        await voice_client.disconnect(force=True)
+        player.stop()
+        await player.voice_client.disconnect(force=True)
+        player.voice_client = None
         await message.channel.send("Disconnected.")
 
 
@@ -97,35 +100,27 @@ class Play(Middleware):
         ctx: Context,
         next: Callable,
         url: Optional[str] = None,
-        extractor: Optional[str] = None,
+        extractor: str = "youtube-dl",
         **kw,
     ):  # noqa: D102
-        if extractor in ("streamlink", "sl", "livestreamer", "ls"):
-            extractor = "streamlink"
-        elif extractor in (
-            "youtube-dl",
-            "youtubedl",
-            "ytdl",
-            "ydl",
-            "utdl",
-            "udl",
-        ):
-            extractor = "youtube-dl"
-        else:
-            extractor = "youtube-dl"
         state: State = MiddlewareState.get_state(ctx, State)
         message = ctx.kwargs["message"]
-        guild = message.guild
+        player = state.players[message.guild.id]
 
-        if url is None and state.guild_states.get(guild.id) is None:
+        if url is None and len(player.playlist.entries) == 0:
             await message.channel.send("Provide URL to play.")
             return
         elif url:
+            if extractor not in state.extractors:
+                await message.channel.send("Extractor not found.")
+                return
+            #
             try:
                 playlist = await state.extractors[extractor].extract(
                     url, ctx.client.loop
                 )
-                state.guild_states[guild.id] = playlist
+                player.stop()
+                player.set_playlist(playlist)
             except UnsupportedURLError:
                 await message.channel.send("Provided URL is not supported.")
                 return
@@ -140,20 +135,11 @@ class Play(Middleware):
                 )
                 return
         #
-        voice_client = message.guild.voice_client
-
-        if voice_client is None:
+        if player.voice_client is None:
             await message.channel.send("I'm not connected to voice channel.")
             return
-        if voice_client.is_playing():
-            voice_client.stop()
         #
-        audio_source = discord.FFmpegPCMAudio(
-            state.guild_states[guild.id][0].stream_url
-        )
-        audio_source = discord.PCMVolumeTransformer(audio_source)
-
-        voice_client.play(audio_source)
+        player.play()
         await message.channel.send("Playing...")
 
 
@@ -161,20 +147,21 @@ class Pause(Middleware):
     """Middleware for pausing currently playing audio."""
 
     async def run(self, *_, ctx: Context, next: Callable, **kw):  # noqa: D102
+        state: State = MiddlewareState.get_state(ctx, State)
         message = ctx.kwargs["message"]
-        voice_client = message.guild.voice_client
+        player = state.players[message.guild.id]
 
-        if voice_client is None:
+        if player.voice_client is None:
             await message.channel.send("I'm not connected to voice channel.")
             return
-        if not voice_client._player:
+        if player.is_stopped():
             await message.channel.send("I'm not playing audio.")
             return
-        if voice_client.is_paused():
+        if player.is_paused():
             await message.channel.send("Already paused.")
             return
         #
-        voice_client.pause()
+        player.pause()
         await message.channel.send("Paused.")
 
 
@@ -182,20 +169,21 @@ class Resume(Middleware):
     """Middleware for resuming currently playing audio."""
 
     async def run(self, *_, ctx: Context, next: Callable, **kw):  # noqa: D102
+        state: State = MiddlewareState.get_state(ctx, State)
         message = ctx.kwargs["message"]
-        voice_client = message.guild.voice_client
+        player = state.players[message.guild.id]
 
-        if voice_client is None:
+        if player.voice_client is None:
             await message.channel.send("I'm not connected to voice channel.")
             return
-        if not voice_client._player:
+        if player.is_stopped():
             await message.channel.send("I'm not playing audio.")
             return
-        if not voice_client.is_paused():
+        if player.is_playing():
             await message.channel.send("Already playing.")
             return
         #
-        voice_client.resume()
+        player.resume()
         await message.channel.send("Resumed.")
 
 
@@ -203,15 +191,57 @@ class Stop(Middleware):
     """Middleware for stopping currently playing audio."""
 
     async def run(self, *_, ctx: Context, next: Callable, **kw):  # noqa: D102
+        state: State = MiddlewareState.get_state(ctx, State)
         message = ctx.kwargs["message"]
-        voice_client = message.guild.voice_client
+        player = state.players[message.guild.id]
 
-        if voice_client is None:
+        if player.voice_client is None:
             await message.channel.send("I'm not connected to voice channel.")
             return
-        if not voice_client._player:
+        if player.is_stopped():
             await message.channel.send("I'm not playing audio.")
             return
         #
-        voice_client.stop()
+        player.stop()
         await message.channel.send("Stopped.")
+
+
+class Skip(Middleware):
+    """Middleware for skipping currently playing audio."""
+
+    async def run(self, *_, ctx: Context, next: Callable, **kw):  # noqa: D102
+        state: State = MiddlewareState.get_state(ctx, State)
+        message = ctx.kwargs["message"]
+        player = state.players[message.guild.id]
+
+        if player.voice_client is None:
+            await message.channel.send("I'm not connected to voice channel.")
+            return
+        if player.is_stopped():
+            await message.channel.send("I'm not playing audio.")
+            return
+        #
+        player.skip()
+        await message.channel.send("Skipped.")
+
+
+class Volume(Middleware):
+    """Middleware for change volume of audio player."""
+
+    async def run(self, *_, ctx: Context, next: Callable, volume: Optional[str] = None, **kw):  # noqa: D102
+        state: State = MiddlewareState.get_state(ctx, State)
+        message = ctx.kwargs["message"]
+        player = state.players[message.guild.id]
+
+        if volume is None:
+            await message.channel.send("Provide a volume value.")
+            return
+
+        try:
+            volume = float(volume)
+        except ValueError:
+            await message.channel.send("Only float values are possible.")
+            return
+        #
+        player.volume = volume
+        await message.channel.send(f"Volume changed to {player.volume}")

@@ -21,30 +21,48 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from hugo.ext.audio.extractor import Extractor, YouTubeDLExtractor, StreamlinkExtractor
+from collections import defaultdict
+from typing import Sequence, Type
+
+from hugo.ext.audio.extractor import (
+    Extractor,
+    YouTubeDLExtractor,
+    StreamlinkExtractor,
+)
+from hugo.ext.audio.player import Player
 
 
 class State:
-    def __init__(self):
-        self.guild_states = {}
+    """State class for audio extension related information.
+
+    Contains different extractors' instances and current guilds' players.
+
+    Parameters
+    ----------
+    extractors : Sequence[Type[:class:`hugo.ext.audio.extractor.Extractor`]]
+        Extractors to initialize.
+
+    Attributes
+    ----------
+    players : dict
+        Map guild.id -> guild player object with current playlist, custom
+        options and other info, related for that guild.
+    extractors : dict
+        Map with possible extractors.
+    """
+
+    def __init__(
+        self,
+        extractors: Sequence[Type[Extractor]] = [
+            YouTubeDLExtractor,
+            StreamlinkExtractor,
+        ],
+    ):
+        self.players = defaultdict(Player)
         self.extractors = {}
 
-        self.initialize_extractors()
+        for extractor in extractors:
+            instance = extractor()
 
-    def initialize_extractors(self):
-        self.extractors["youtube-dl"] = YouTubeDLExtractor()
-        self.extractors["streamlink"] = StreamlinkExtractor()
-
-
-class GuildState:
-    def __init__(self):
-        self._volume = 1.0
-        self.playlist = []
-
-    @property
-    def volume(self):
-        return self._volume
-
-    @volume.setter
-    def volume(self, value):
-        self._volume = max(max(value, 2.0), 0.0)
+            for alias in extractor.ALIASES:
+                self.extractors[alias] = instance

@@ -24,12 +24,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import abc
 import asyncio
 import functools
-from typing import Sequence
 
 import streamlink
 import youtube_dl
 
-from hugo.ext.audio.entry import Entry
+from hugo.ext.audio.entry import Entry, Playlist
 from hugo.ext.audio.exceptions import (
     AudioExtensionError,
     UnsupportedURLError,
@@ -38,13 +37,37 @@ from hugo.ext.audio.exceptions import (
 
 
 class Extractor(abc.ABC):
+    """Abstract extractor class.
+
+    Attributes
+    ----------
+    ALIASES : list
+        Alias names for extractor.
+    """
+
+    ALIASES = []
+
+    @abc.abstractmethod
     async def extract(
         self, source_url: str, loop: asyncio.AbstractEventLoop
-    ) -> Sequence[Entry]:
+    ) -> Playlist:
         pass  # pragma: no cover
 
 
 class YouTubeDLExtractor(Extractor):
+    """Youtube-DL extractor.
+
+    Attributes
+    ----------
+    ALIASES : list
+        Alias names for extractor.
+    OPTIONS : dict
+        Youtube-DL extract options.
+    session : :class:`youtube_dl.YoutubeDL`
+        Youtube-DL session object.
+    """
+
+    ALIASES = ["youtube-dl", "youtubedl", "ytdl", "ydl"]
 
     OPTIONS = {
         "format": "bestaudio/best",
@@ -56,7 +79,9 @@ class YouTubeDLExtractor(Extractor):
     def __init__(self):
         self.session = youtube_dl.YoutubeDL(params=self.OPTIONS)
 
-    async def extract(self, url: str, loop: asyncio.AbstractEventLoop) -> Entry:
+    async def extract(
+        self, url: str, loop: asyncio.AbstractEventLoop
+    ) -> Playlist:  # noqa: D102
         try:
             info = await loop.run_in_executor(
                 None,
@@ -64,24 +89,43 @@ class YouTubeDLExtractor(Extractor):
                     self.session.extract_info, url, download=False
                 ),
             )
-            type = info.get("_type", "video")
         except Exception:
             raise AudioExtensionError()
+        #
+        type = info.get("_type", "video")
+        playlist = Playlist()
+
         if type == "video":
-            return [Entry(url, info["url"])]
+            playlist.entries.append(Entry(info["url"], source_url=url))
         elif type == "playlist":
-            return [
-                Entry(url, info_entry["url"]) for info_entry in info["entries"]
-            ]
+            playlist.source_url = url
+            for info_entry in info["entries"]:
+                playlist.entries.append(Entry(info_entry["url"]))
         else:
             raise UnsupportedURLError()
+        #
+        return playlist
 
 
 class StreamlinkExtractor(Extractor):
+    """Streamlink extractor.
+
+    Attributes
+    ----------
+    ALIASES : list
+        Alias names for extractor.
+    session : :class:`streamlink.Streamlink`
+        Strealink session object.
+    """
+
+    ALIASES = ["streamlink", "sl", "livestreamer", "ls"]
+
     def __init__(self):
         self.session = streamlink.Streamlink()
 
-    async def extract(self, url: str, loop: asyncio.AbstractEventLoop) -> Entry:
+    async def extract(
+        self, url: str, loop: asyncio.AbstractEventLoop
+    ) -> Playlist:  # noqa: D102
         try:
             streams = await loop.run_in_executor(
                 None, functools.partial(self.session.streams, url)
@@ -96,4 +140,6 @@ class StreamlinkExtractor(Extractor):
         if "best" not in streams:
             raise EmptyStreamError()
         #
-        return [Entry(url, streams["best"].url)]
+        playlist = Playlist()
+        playlist.entries.append(Entry(streams["best"].url, source_url=url))
+        return playlist

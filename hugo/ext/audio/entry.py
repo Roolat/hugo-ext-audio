@@ -21,8 +21,25 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
+import abc
+from typing import Optional
 
-class Entry:
-    def __init__(self, source_url, stream_url):
+
+class SourceInterface(abc.ABC):
+    def __init__(self, source_url: Optional[str] = None):
         self.source_url = source_url
+
+    def is_source(self) -> bool:
+        return self.source_url is not None
+
+
+class Entry(SourceInterface):
+    def __init__(self, stream_url, *, source_url: Optional[str] = None):
+        super().__init__(source_url)
         self.stream_url = stream_url
+
+
+class Playlist(SourceInterface):
+    def __init__(self, *, source_url: Optional[str] = None):
+        super().__init__(source_url)
+        self.entries = []
