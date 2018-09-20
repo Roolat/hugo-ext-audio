@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "hugo-ext-audio"
-version = "2.0.0"
-description = "Audio- (music-) related functionality middleware for Hugo"
+version = "2.1.0"
+description = "Audio- (music-) related functionality extension for Hugo"
 authors = ["Nariman Safiulin <woofilee@gmail.com>"]
 license = "MIT"
 
@@ -26,8 +26,10 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.6"
 "discord.py" = { git = "https://github.com/Rapptz/discord.py.git", branch = "rewrite", extras = ["voice"] }
-hugo-core = "^0.6.0"
+hugo-core = "^0.7.0"
 pendulum = "^2.0"
+streamlink = "^0.14.0"
+youtube-dl = "*"
 
 [tool.black]
 line-length = 80

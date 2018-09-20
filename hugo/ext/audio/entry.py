@@ -21,30 +21,25 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from hugo.ext.audio.entry import Entry
-from hugo.ext.audio.exceptions import (
-    AudioExtensionError,
-    UnsupportedURLError,
-    EmptyStreamError,
-    PlayerError,
-)
-from hugo.ext.audio.extractor import (
-    Extractor,
-    StreamlinkExtractor,
-    YouTubeDLExtractor,
-)
-from hugo.ext.audio.middleware import (
-    Join,
-    Leave,
-    Play,
-    Pause,
-    Resume,
-    Skip,
-    Stop,
-    Volume,
-)
-from hugo.ext.audio.player import Player, PlayerStatus
-from hugo.ext.audio.state import State
+import abc
+from typing import Optional
 
 
-__version__ = "2.1.0"
+class SourceInterface(abc.ABC):
+    def __init__(self, source_url: Optional[str] = None):
+        self.source_url = source_url
+
+    def is_source(self) -> bool:
+        return self.source_url is not None
+
+
+class Entry(SourceInterface):
+    def __init__(self, stream_url, *, source_url: Optional[str] = None):
+        super().__init__(source_url)
+        self.stream_url = stream_url
+
+
+class Playlist(SourceInterface):
+    def __init__(self, *, source_url: Optional[str] = None):
+        super().__init__(source_url)
+        self.entries = []

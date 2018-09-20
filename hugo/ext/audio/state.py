@@ -21,30 +21,48 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from hugo.ext.audio.entry import Entry
-from hugo.ext.audio.exceptions import (
-    AudioExtensionError,
-    UnsupportedURLError,
-    EmptyStreamError,
-    PlayerError,
-)
+from collections import defaultdict
+from typing import Sequence, Type
+
 from hugo.ext.audio.extractor import (
     Extractor,
-    StreamlinkExtractor,
     YouTubeDLExtractor,
+    StreamlinkExtractor,
 )
-from hugo.ext.audio.middleware import (
-    Join,
-    Leave,
-    Play,
-    Pause,
-    Resume,
-    Skip,
-    Stop,
-    Volume,
-)
-from hugo.ext.audio.player import Player, PlayerStatus
-from hugo.ext.audio.state import State
+from hugo.ext.audio.player import Player
 
 
-__version__ = "2.1.0"
+class State:
+    """State class for audio extension related information.
+
+    Contains different extractors' instances and current guilds' players.
+
+    Parameters
+    ----------
+    extractors : Sequence[Type[:class:`hugo.ext.audio.extractor.Extractor`]]
+        Extractors to initialize.
+
+    Attributes
+    ----------
+    players : dict
+        Map guild.id -> guild player object with current playlist, custom
+        options and other info, related for that guild.
+    extractors : dict
+        Map with possible extractors.
+    """
+
+    def __init__(
+        self,
+        extractors: Sequence[Type[Extractor]] = [
+            YouTubeDLExtractor,
+            StreamlinkExtractor,
+        ],
+    ):
+        self.players = defaultdict(Player)
+        self.extractors = {}
+
+        for extractor in extractors:
+            instance = extractor()
+
+            for alias in extractor.ALIASES:
+                self.extractors[alias] = instance
