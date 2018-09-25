@@ -26,8 +26,8 @@ from typing import Sequence, Type
 
 from hugo.ext.audio.extractor import (
     Extractor,
-    YouTubeDLExtractor,
     StreamlinkExtractor,
+    YouTubeDLExtractor,
 )
 from hugo.ext.audio.player import Player
 

@@ -24,9 +24,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 from hugo.ext.audio.entry import Entry
 from hugo.ext.audio.exceptions import (
     AudioExtensionError,
-    UnsupportedURLError,
     EmptyStreamError,
     PlayerError,
+    UnsupportedURLError,
 )
 from hugo.ext.audio.extractor import (
     Extractor,
@@ -36,8 +36,8 @@ from hugo.ext.audio.extractor import (
 from hugo.ext.audio.middleware import (
     Join,
     Leave,
-    Play,
     Pause,
+    Play,
     Resume,
     Skip,
     Stop,
@@ -47,4 +47,4 @@ from hugo.ext.audio.player import Player, PlayerStatus
 from hugo.ext.audio.state import State
 
 
-__version__ = "2.1.0"
+__version__ = "2.2.0"

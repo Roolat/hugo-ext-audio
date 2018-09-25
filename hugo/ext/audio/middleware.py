@@ -31,8 +31,8 @@ from hugo.core.middleware import Middleware, MiddlewareState
 
 from hugo.ext.audio.exceptions import (
     AudioExtensionError,
-    UnsupportedURLError,
     EmptyStreamError,
+    UnsupportedURLError,
 )
 from hugo.ext.audio.state import State
 

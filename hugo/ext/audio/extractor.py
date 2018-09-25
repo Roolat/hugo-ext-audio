@@ -31,8 +31,8 @@ import youtube_dl
 from hugo.ext.audio.entry import Entry, Playlist
 from hugo.ext.audio.exceptions import (
     AudioExtensionError,
-    UnsupportedURLError,
     EmptyStreamError,
+    UnsupportedURLError,
 )
 
 
