@@ -21,30 +21,10 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from hugo.ext.audio.entry import Entry
-from hugo.ext.audio.exceptions import (
-    AudioExtensionError,
-    EmptyStreamError,
-    PlayerError,
-    UnsupportedURLError,
-)
-from hugo.ext.audio.extractor import (
-    Extractor,
-    StreamlinkExtractor,
-    YouTubeDLExtractor,
-)
-from hugo.ext.audio.middleware import (
-    Join,
-    Leave,
-    Pause,
-    Play,
-    Resume,
-    Skip,
-    Stop,
-    Volume,
-)
-from hugo.ext.audio.player import Player, PlayerStatus
-from hugo.ext.audio.state import State
+from concord.exceptions import ExtensionError
 
 
-__version__ = "2.2.0"
+class AudioExtensionError(ExtensionError):
+    """Base exception class for the Audio extension errors."""
+
+    pass

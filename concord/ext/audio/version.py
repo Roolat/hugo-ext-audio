@@ -21,22 +21,4 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from hugo.core.exceptions import ExtensionError
-
-
-class AudioExtensionError(ExtensionError):
-    """Base exception class for the audio extension errors."""
-
-    pass
-
-
-class UnsupportedURLError(AudioExtensionError):
-    pass
-
-
-class EmptyStreamError(AudioExtensionError):
-    pass
-
-
-class PlayerError(AudioExtensionError):
-    pass
+version = "3.0.0"
