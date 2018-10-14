@@ -21,4 +21,10 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__version__ = "1.0.0"
+from concord.exceptions import ExtensionError
+
+
+class AudioExtensionError(ExtensionError):
+    """Base exception class for the Audio extension errors."""
+
+    pass

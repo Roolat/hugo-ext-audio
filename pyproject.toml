@@ -1,14 +1,14 @@
 [tool.poetry]
-name = "hugo-ext-audio"
-version = "1.0.0"
-description = "Audio- (music-) related functionality middleware for Hugo"
+name = "cncrd-ext-audio"
+version = "3.0.0"
+description = "Audio-related functionality extension for Concord"
 authors = ["Nariman Safiulin <woofilee@gmail.com>"]
 license = "MIT"
 
 readme = "README.md"
-repository = "https://github.com/Roolat/hugo-ext-audio"
+repository = "https://github.com/Roolat/concord-ext-audio"
 
-keywords = ["discord", "bot", "hugo", "audio", "music"]
+keywords = ["discord", "concord", "bot", "audio"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
@@ -20,14 +20,17 @@ classifiers = [
 ]
 
 packages = [
-    { include = "hugo" },
+    { include = "concord" },
 ]
 
 [tool.poetry.dependencies]
 python = "^3.6"
-"discord.py" = { git = "https://github.com/Rapptz/discord.py.git", branch = "rewrite" }
-hugo = "^0.5.0"
-pendulum = "^2.0"
+cncrd = "^1.0.0"
+"discord.py" = { git = "https://github.com/Rapptz/discord.py.git", branch = "rewrite", extras = ["voice"] }
+
+[tool.poetry.dev-dependencies]
+black = "^18.9b0"
+pre-commit = "^1.10"
 
 [tool.black]
 line-length = 80
