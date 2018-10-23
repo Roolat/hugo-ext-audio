@@ -30,7 +30,7 @@ cncrd = "^1.0.0"
 
 [tool.poetry.dev-dependencies]
 black = "^18.9b0"
-pre-commit = "^1.10"
+pre-commit = "^1.12"
 
 [tool.black]
 line-length = 80
