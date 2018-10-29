@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "cncrd-ext-audio"
-version = "3.0.0"
+version = "0.1.0"
 description = "Audio-related functionality extension for Concord"
 authors = ["Nariman Safiulin <woofilee@gmail.com>"]
 license = "MIT"
 
 readme = "README.md"
-repository = "https://github.com/Roolat/concord-ext-audio"
+repository = "https://github.com/narimanized/concord-ext-audio"
 
 keywords = ["discord", "concord", "bot", "audio"]
 classifiers = [
@@ -25,12 +25,12 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.6"
-cncrd = "^1.0.0"
+cncrd = "^0.10.1"
 "discord.py" = { git = "https://github.com/Rapptz/discord.py.git", branch = "rewrite", extras = ["voice"] }
 
 [tool.poetry.dev-dependencies]
 black = "^18.9b0"
-pre-commit = "^1.10"
+pre-commit = "^1.12"
 
 [tool.black]
 line-length = 80
