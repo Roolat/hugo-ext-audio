@@ -6,7 +6,7 @@ authors = ["Nariman Safiulin <woofilee@gmail.com>"]
 license = "MIT"
 
 readme = "README.md"
-repository = "https://github.com/narimanized/concord-ext-audio"
+repository = "https://github.com/narimanizett/concord-ext-audio"
 
 keywords = ["discord", "concord", "bot", "audio"]
 classifiers = [
