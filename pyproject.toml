@@ -29,7 +29,7 @@ cncrd = "^0.10.1"
 "discord.py" = { git = "https://github.com/Rapptz/discord.py.git", branch = "rewrite", extras = ["voice"] }
 
 [tool.poetry.dev-dependencies]
-black = "^18.9b0"
+black = "^19.3b0"
 pre-commit = "^1.12"
 
 [tool.black]
